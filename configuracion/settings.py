@@ -64,14 +64,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "configuracion.wsgi.application"
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    sqlite_path = (BASE_DIR / "db.sqlite3").as_posix()
+    DATABASE_URL = f"sqlite:///{sqlite_path}"
+
 DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.sqlite3",
-    #     "NAME": BASE_DIR / "db.sqlite3",
-    # }
     "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600
+        default=DATABASE_URL,
+        conn_max_age=600,
     )
 }
 
