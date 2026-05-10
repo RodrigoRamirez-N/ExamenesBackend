@@ -18,6 +18,7 @@ CORS_ALLOWED_ORIGINS = _split_env(os.getenv("CORS_ALLOWED_ORIGINS", ""))
 CORS_ALLOW_CREDENTIALS = False
 
 INSTALLED_APPS = [
+    "configuracion.apps.ConfiguracionConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
