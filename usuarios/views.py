@@ -112,7 +112,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
+                        value={"detail": "No se proporcionaron credenciales de autenticacion."},
                     )
                 ],
             ),
@@ -148,7 +148,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
+                        value={"detail": "No se proporcionaron credenciales de autenticacion."},
                     )
                 ],
             ),
@@ -157,7 +157,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin permisos",
-                        value={"detail": "You do not have permission to perform this action."},
+                        value={"detail": "No tienes permiso para realizar esta accion."},
                     )
                 ],
             ),
@@ -185,7 +185,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
+                        value={"detail": "No se proporcionaron credenciales de autenticacion."},
                     )
                 ],
             ),
@@ -194,7 +194,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin permisos",
-                        value={"detail": "You do not have permission to perform this action."},
+                        value={"detail": "No tienes permiso para realizar esta accion."},
                     )
                 ],
             ),
@@ -203,7 +203,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "No encontrado",
-                        value={"detail": "Not found."},
+                        value={"detail": "No encontrado."},
                     )
                 ],
             ),
@@ -301,7 +301,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
+                        value={"detail": "No se proporcionaron credenciales de autenticacion."},
                     )
                 ],
             ),
@@ -310,7 +310,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin permisos",
-                        value={"detail": "You do not have permission to perform this action."},
+                        value={"detail": "No tienes permiso para realizar esta accion."},
                     )
                 ],
             ),
@@ -319,7 +319,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "No encontrado",
-                        value={"detail": "Not found."},
+                        value={"detail": "No encontrado."},
                     )
                 ],
             ),
@@ -361,7 +361,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
+                        value={"detail": "No se proporcionaron credenciales de autenticacion."},
                     )
                 ],
             ),
@@ -370,7 +370,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin permisos",
-                        value={"detail": "You do not have permission to perform this action."},
+                        value={"detail": "No tienes permiso para realizar esta accion."},
                     )
                 ],
             ),
@@ -379,7 +379,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "No encontrado",
-                        value={"detail": "Not found."},
+                        value={"detail": "No encontrado."},
                     )
                 ],
             ),
@@ -393,7 +393,7 @@ class LogoutAPIView(APIView):
                 examples=[
                     OpenApiExample(
                         "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
+                        value={"detail": "No se proporcionaron credenciales de autenticacion."},
                     )
                 ],
             ),
