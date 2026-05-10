@@ -18,3 +18,11 @@
 | ISFP | El Artista | Sensible, creativo, adaptable y espontáneo; valora la expresión personal y lo estético. |
 | ESTP | El Legionario | Enérgico, directo, realista y orientado a la acción; responde rápido y se adapta bien a entornos dinámicos. |
 | ESFP | El Actor | Sociable, cálido, expresivo y optimista; disfruta el presente y conecta fácilmente con otros. |
+
+# Tipos de aprendizaje VARK
+
+|---|---|---|
+| V | Visual | Aprende mejor con imágenes, diagramas, mapas, colores y representaciones gráficas. |
+| A | Aural / Auditivo | Aprende mejor escuchando explicaciones, discusiones, podcasts o clases habladas. |
+| R | Read/Write | Aprende mejor leyendo y escribiendo; prefiere textos, apuntes, listas y resúmenes. |
+| K | Kinestésico | Aprende mejor con práctica, movimiento, experimentos y experiencias reales. |
