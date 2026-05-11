@@ -18,6 +18,7 @@ csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS = [origin for origin in csrf_origins.split(",") if origin]
 CORS_ALLOWED_ORIGINS = _split_env(os.getenv("CORS_ALLOWED_ORIGINS", ""))
 CORS_ALLOW_CREDENTIALS = False
+CORS_ALLOW_ALL_ORIGINS = True
 
 INSTALLED_APPS = [
     "configuracion.apps.ConfiguracionConfig",
