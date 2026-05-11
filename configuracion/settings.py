@@ -14,6 +14,8 @@ def _split_env(valor: str) -> list[str]:
 
 
 ALLOWED_HOSTS = _split_env(os.getenv("DJANGO_ALLOWED_HOSTS", "")) or ["*"]
+csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [origin for origin in csrf_origins.split(",") if origin]
 CORS_ALLOWED_ORIGINS = _split_env(os.getenv("CORS_ALLOWED_ORIGINS", ""))
 CORS_ALLOW_CREDENTIALS = False
 
