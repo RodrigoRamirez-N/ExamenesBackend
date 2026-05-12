@@ -114,7 +114,12 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ExamenLecturaSerializer
     permission_classes = [AllowAny]
 
-    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        authentication_classes=[],
+    )
     @extend_schema(
         request=None,
         responses={
@@ -245,6 +250,7 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
         }
     ),
     retrieve=extend_schema(
+        auth=[],
         responses={
             200: OpenApiResponse(
                 response=ExamenPresentadoDetalleSerializer,
@@ -280,24 +286,6 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
                     )
                 ],
             ),
-            401: OpenApiResponse(
-                response=ErrorDetalleSerializer,
-                examples=[
-                    OpenApiExample(
-                        "Sin credenciales",
-                        value={"detail": "Authentication credentials were not provided."},
-                    )
-                ],
-            ),
-            403: OpenApiResponse(
-                response=ErrorDetalleSerializer,
-                examples=[
-                    OpenApiExample(
-                        "Sin permisos",
-                        value={"detail": "You do not have permission to perform this action."},
-                    )
-                ],
-            ),
             404: OpenApiResponse(
                 response=ErrorDetalleSerializer,
                 examples=[
@@ -310,9 +298,10 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
 class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ExamenPresentado.objects.select_related("examen", "usuario")
     serializer_class = ExamenPresentadoDetalleSerializer
+    lookup_value_regex = r"\d+"
 
     def get_permissions(self):
-        if self.action == "enviar":
+        if self.action in {"enviar", "retrieve"}:
             return [AllowAny()]
         return [IsAuthenticated()]
 
@@ -322,10 +311,11 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
         if usuario.is_authenticated and usuario.rol == RolUsuario.ADMIN:
             return queryset
         if usuario.is_authenticated:
-            return queryset.filter(usuario=usuario)
+            return queryset.filter(Q(usuario=usuario) | Q(usuario__isnull=True))
+        if self.action == "retrieve":
+            return queryset.filter(usuario__isnull=True)
         return queryset.none()
 
-    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
     @extend_schema(
         request=ExamenPresentadoEnvioSerializer,
         responses={
@@ -395,6 +385,12 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
             )
         ],
         auth=[],
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        authentication_classes=[],
     )
     def enviar(self, request):
         serializer = ExamenPresentadoEnvioSerializer(data=request.data)
