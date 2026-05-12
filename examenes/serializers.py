@@ -63,9 +63,13 @@ class RespuestaEnvioSerializer(serializers.Serializer):
 
 
 class ExamenPresentadoEnvioSerializer(serializers.Serializer):
-    respuestas = RespuestaEnvioSerializer(many=True)
+    examen_id = serializers.IntegerField()
+    tipo = serializers.CharField(required=False)
+    nombre = serializers.CharField(required=False)
+    descripcion = serializers.CharField(required=False, allow_blank=True)
+    preguntas = RespuestaEnvioSerializer(many=True)
 
-    def validate_respuestas(self, value):
+    def validate_preguntas(self, value):
         ids_pregunta = [item["pregunta_id"] for item in value]
         if len(ids_pregunta) != len(set(ids_pregunta)):
             raise serializers.ValidationError("Hay preguntas duplicadas en el envio")

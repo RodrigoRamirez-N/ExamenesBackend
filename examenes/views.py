@@ -28,8 +28,6 @@ from examenes.serializers import (
     ExamenPresentadoDetalleSerializer,
     ExamenPresentadoEnvioSerializer,
     ExamenPresentadoResumenSerializer,
-    JungResultadoSerializer,
-    VarkResultadoSerializer,
 )
 from examenes.servicios import calcular_resultado_jung, calcular_resultado_vark
 from usuarios.permissions import EsAdmin
@@ -48,7 +46,7 @@ ErrorEnvioSerializer = inline_serializer(
     name="ErrorEnvio",
     fields={
         "detalle": serializers.CharField(required=False),
-        "respuestas": serializers.ListField(child=serializers.CharField(), required=False),
+        "preguntas": serializers.ListField(child=serializers.CharField(), required=False),
     },
 )
 
@@ -116,7 +114,7 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ExamenLecturaSerializer
     permission_classes = [AllowAny]
 
-    @action(detail=True, methods=["post"], permission_classes=[AllowAny])
+    @action(detail=False, methods=["post"], permission_classes=[AllowAny])
     @extend_schema(
         request=None,
         responses={
@@ -333,66 +331,18 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
         responses={
             200: OpenApiResponse(
                 response=inline_serializer(
-                    name="ExamenEnviado",
+                    name="EnvioExitoso",
                     fields={
-                        "examen_presentado": ExamenPresentadoResumenSerializer(),
-                        "resultado": serializers.JSONField(),
+                        "mensaje": serializers.CharField(),
+                        "examen_presentado_id": serializers.IntegerField(),
                     },
                 ),
                 examples=[
                     OpenApiExample(
-                        "Resultado VARK",
+                        "Envio exitoso",
                         value={
-                            "examen_presentado": {
-                                "examen_presentado_id": 10,
-                                "examen_id": 1,
-                                "usuario_id": 2,
-                                "grupo": "LICENCIATURA",
-                                "fecha_creacion": "2026-05-09T12:00:00Z",
-                                "estado": "FINALIZADO",
-                            },
-                            "resultado": {
-                                "v": 4,
-                                "a": 6,
-                                "r": 2,
-                                "k": 4,
-                                "arquetipo": {
-                                    "arquetipo_id": 1,
-                                    "codigo": "A",
-                                    "nombre": "Aural / Auditivo",
-                                    "descripcion": "Aprende mejor escuchando...",
-                                },
-                            },
-                        },
-                    ),
-                    OpenApiExample(
-                        "Resultado JUNG",
-                        value={
-                            "examen_presentado": {
-                                "examen_presentado_id": 20,
-                                "examen_id": 2,
-                                "usuario_id": None,
-                                "grupo": None,
-                                "fecha_creacion": "2026-05-09T12:00:00Z",
-                                "estado": "FINALIZADO",
-                            },
-                            "resultado": {
-                                "i_count": 3,
-                                "e_count": 5,
-                                "n_count": 6,
-                                "s_count": 2,
-                                "t_count": 4,
-                                "f_count": 4,
-                                "j_count": 5,
-                                "p_count": 3,
-                                "tipo_personalidad": "ENFJ",
-                                "arquetipo": {
-                                    "arquetipo_id": 5,
-                                    "codigo": "ENFJ",
-                                    "nombre": "El Profesor",
-                                    "descripcion": "Carismatico, atento...",
-                                },
-                            },
+                            "mensaje": "envio exitoso",
+                            "examen_presentado_id": 10,
                         },
                     ),
                 ],
@@ -401,26 +351,21 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
                 response=ErrorEnvioSerializer,
                 examples=[
                     OpenApiExample(
-                        "Estado no valido",
-                        value={"detalle": "El examen no esta en estado EN_PROCESO"},
+                        "Respuestas inexistentes",
+                        value={"detalle": "Hay respuestas que no existen"},
                     ),
                     OpenApiExample(
-                        "Respuesta no corresponde",
+                        "Respuesta no corresponde a la pregunta",
+                        value={"detalle": "Respuesta no corresponde a la pregunta"},
+                    ),
+                    OpenApiExample(
+                        "Respuesta no corresponde al examen",
                         value={"detalle": "Respuesta no corresponde al examen"},
                     ),
                     OpenApiExample(
                         "Preguntas duplicadas",
-                        value={"respuestas": ["Hay preguntas duplicadas en el envio"]},
+                        value={"preguntas": ["Hay preguntas duplicadas en el envio"]},
                     ),
-                ],
-            ),
-            403: OpenApiResponse(
-                response=ErrorDetallePersonalizadoSerializer,
-                examples=[
-                    OpenApiExample(
-                        "Sin permiso",
-                        value={"detalle": "No tienes permiso para enviar este examen"},
-                    )
                 ],
             ),
             404: OpenApiResponse(
@@ -428,7 +373,7 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
                 examples=[
                     OpenApiExample(
                         "No encontrado",
-                        value={"detalle": "Examen presentado no encontrado"},
+                        value={"detalle": "Examen no encontrado"},
                     )
                 ],
             ),
@@ -437,40 +382,32 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
             OpenApiExample(
                 "Envio de respuestas",
                 value={
-                    "respuestas": [
+                    "examen_id": 1,
+                    "tipo": "VARK",
+                    "nombre": "Test VARK",
+                    "descripcion": "Estilos de aprendizaje VARK",
+                    "preguntas": [
                         {"pregunta_id": 1, "respuesta_id": 2},
                         {"pregunta_id": 2, "respuesta_id": 8},
-                    ]
+                    ],
                 },
                 request_only=True,
             )
         ],
         auth=[],
     )
-    def enviar(self, request, pk=None):
-        try:
-            examen_presentado = ExamenPresentado.objects.select_related("examen", "usuario").get(
-                examen_presentado_id=pk
-            )
-        except ExamenPresentado.DoesNotExist:
-            return Response(
-                {"detalle": "Examen presentado no encontrado"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        if examen_presentado.estado != EstadoExamenPresentado.EN_PROCESO:
-            return Response(
-                {"detalle": "El examen no esta en estado EN_PROCESO"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if examen_presentado.usuario_id:
-            if not request.user.is_authenticated or request.user != examen_presentado.usuario:
-                return Response(
-                    {"detalle": "No tienes permiso para enviar este examen"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+    def enviar(self, request):
         serializer = ExamenPresentadoEnvioSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        respuestas_data = serializer.validated_data["respuestas"]
+        examen_id = serializer.validated_data["examen_id"]
+        respuestas_data = serializer.validated_data["preguntas"]
+        try:
+            examen = Examen.objects.get(examen_id=examen_id)
+        except Examen.DoesNotExist:
+            return Response(
+                {"detalle": "Examen no encontrado"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         respuesta_ids = [item["respuesta_id"] for item in respuestas_data]
         respuestas = Respuesta.objects.filter(respuesta_id__in=respuesta_ids).select_related("pregunta")
         if respuestas.count() != len(respuesta_ids):
@@ -479,7 +416,6 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         respuestas_por_id = {respuesta.respuesta_id: respuesta for respuesta in respuestas}
-        registros = []
         for item in respuestas_data:
             respuesta = respuestas_por_id[item["respuesta_id"]]
             if respuesta.pregunta_id != item["pregunta_id"]:
@@ -487,35 +423,40 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
                     {"detalle": "Respuesta no corresponde a la pregunta"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if respuesta.pregunta.examen_id != examen_presentado.examen_id:
+            if respuesta.pregunta.examen_id != examen.examen_id:
                 return Response(
                     {"detalle": "Respuesta no corresponde al examen"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            registros.append(
-                ExamenPresentadoRespuesta(
-                    examen_presentado=examen_presentado,
-                    pregunta_id=item["pregunta_id"],
-                    respuesta=respuesta,
-                    valor=respuesta.valor,
-                )
-            )
+        usuario = request.user if request.user.is_authenticated else None
+        grupo = usuario.grupo if usuario else None
         with transaction.atomic():
-            ExamenPresentadoRespuesta.objects.filter(examen_presentado=examen_presentado).delete()
+            examen_presentado = ExamenPresentado.objects.create(
+                examen=examen,
+                usuario=usuario,
+                grupo=grupo,
+                estado=EstadoExamenPresentado.EN_PROCESO,
+            )
+            registros = []
+            for item in respuestas_data:
+                respuesta = respuestas_por_id[item["respuesta_id"]]
+                registros.append(
+                    ExamenPresentadoRespuesta(
+                        examen_presentado=examen_presentado,
+                        pregunta_id=item["pregunta_id"],
+                        respuesta=respuesta,
+                        valor=respuesta.valor,
+                    )
+                )
             ExamenPresentadoRespuesta.objects.bulk_create(registros)
             if examen_presentado.examen.tipo == TipoExamen.VARK:
-                resultado = calcular_resultado_vark(examen_presentado)
-                resultado_serializado = VarkResultadoSerializer(resultado).data
+                calcular_resultado_vark(examen_presentado)
             else:
-                resultado = calcular_resultado_jung(examen_presentado)
-                resultado_serializado = JungResultadoSerializer(resultado).data
+                calcular_resultado_jung(examen_presentado)
             examen_presentado.estado = EstadoExamenPresentado.FINALIZADO
             examen_presentado.save(update_fields=["estado"])
         return Response(
-            {
-                "examen_presentado": ExamenPresentadoResumenSerializer(examen_presentado).data,
-                "resultado": resultado_serializado,
-            }
+            {"mensaje": "envio exitoso", "examen_presentado_id": examen_presentado.examen_presentado_id}
         )
 
 
