@@ -172,7 +172,7 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
                 ],
             ),
         },
-        auth=[],
+        auth=[{"TokenAuth": []}, {}],
     )
     def iniciar(self, request, pk=None):
         examen = self.get_object()
@@ -391,7 +391,7 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
                 request_only=True,
             )
         ],
-        auth=[],
+        auth=[{"TokenAuth": []}, {}],
     )
     @action(
         detail=False,
