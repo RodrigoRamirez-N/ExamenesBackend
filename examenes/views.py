@@ -118,9 +118,12 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
-        authentication_classes=[],
     )
     @extend_schema(
+        description=(
+            "Token opcional: si llega Authorization: Token valido, se asocia el usuario al examen presentado. "
+            "Sin token se permite anonimo. Token invalido devuelve 401."
+        ),
         request=None,
         responses={
             201: OpenApiResponse(
@@ -317,6 +320,10 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset.none()
 
     @extend_schema(
+        description=(
+            "Token opcional: si llega Authorization: Token valido, se asocia el usuario al examen presentado. "
+            "Sin token se permite anonimo. Token invalido devuelve 401."
+        ),
         request=ExamenPresentadoEnvioSerializer,
         responses={
             200: OpenApiResponse(
@@ -390,7 +397,6 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
-        authentication_classes=[],
     )
     def enviar(self, request):
         serializer = ExamenPresentadoEnvioSerializer(data=request.data)
