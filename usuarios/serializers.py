@@ -13,6 +13,7 @@ class UsuarioLecturaSerializer(serializers.ModelSerializer):
 
 class UsuarioRegistroSerializer(serializers.ModelSerializer):
     contrasena = serializers.CharField(write_only=True, min_length=8)
+    rol = serializers.ChoiceField(choices=RolUsuario.choices, required=False)
 
     class Meta:
         model = Usuario

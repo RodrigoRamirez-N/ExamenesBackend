@@ -4,6 +4,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -195,6 +196,7 @@ class ExamenViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        description="Requiere token con rol ADMIN. Devuelve todos los examenes presentados.",
         responses={
             200: OpenApiResponse(
                 response=ExamenPresentadoDetalleSerializer(many=True),
@@ -306,6 +308,10 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
     def get_permissions(self):
         if self.action in {"enviar", "retrieve"}:
             return [AllowAny()]
+        if self.action in {"list", "por_grupo"}:
+            return [EsAdmin()]
+        if self.action == "por_usuario":
+            return [IsAuthenticated()]
         return [IsAuthenticated()]
 
     def get_queryset(self):
@@ -318,6 +324,139 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == "retrieve":
             return queryset.filter(usuario__isnull=True)
         return queryset.none()
+
+    @extend_schema(
+        description=(
+            "Requiere token. ADMIN puede consultar cualquier usuario_id; USUARIO solo su propio usuario_id."
+        ),
+        responses={
+            200: OpenApiResponse(
+                response=ExamenPresentadoDetalleSerializer(many=True),
+                examples=[
+                    OpenApiExample(
+                        "Listado por usuario",
+                        value=[
+                            {
+                                "examen_presentado_id": 10,
+                                "examen": {
+                                    "examen_id": 1,
+                                    "tipo": "VARK",
+                                    "nombre": "Test VARK",
+                                    "descripcion": "Estilos de aprendizaje VARK",
+                                },
+                                "usuario_id": 2,
+                                "grupo": "LICENCIATURA",
+                                "fecha_creacion": "2026-05-09T12:00:00Z",
+                                "estado": "FINALIZADO",
+                                "resultado_vark": {
+                                    "v": 4,
+                                    "a": 6,
+                                    "r": 2,
+                                    "k": 4,
+                                    "arquetipo": {
+                                        "arquetipo_id": 1,
+                                        "codigo": "A",
+                                        "nombre": "Aural / Auditivo",
+                                        "descripcion": "Aprende mejor escuchando...",
+                                    },
+                                },
+                                "resultado_jung": None,
+                            }
+                        ],
+                    )
+                ],
+            ),
+            401: OpenApiResponse(
+                response=ErrorDetalleSerializer,
+                examples=[
+                    OpenApiExample(
+                        "Sin credenciales",
+                        value={"detail": "Authentication credentials were not provided."},
+                    )
+                ],
+            ),
+            403: OpenApiResponse(
+                response=ErrorDetalleSerializer,
+                examples=[
+                    OpenApiExample(
+                        "Sin permisos",
+                        value={"detail": "You do not have permission to perform this action."},
+                    )
+                ],
+            ),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path=r"usuario/(?P<usuario_id>\d+)")
+    def por_usuario(self, request, usuario_id=None):
+        usuario = request.user
+        if usuario.rol != RolUsuario.ADMIN and str(usuario.usuario_id) != str(usuario_id):
+            raise PermissionDenied()
+        queryset = self.get_queryset().filter(usuario_id=usuario_id)
+        return Response(self.get_serializer(queryset, many=True).data)
+
+    @extend_schema(
+        description="Requiere token con rol ADMIN. Devuelve examenes presentados del grupo.",
+        responses={
+            200: OpenApiResponse(
+                response=ExamenPresentadoDetalleSerializer(many=True),
+                examples=[
+                    OpenApiExample(
+                        "Listado por grupo",
+                        value=[
+                            {
+                                "examen_presentado_id": 10,
+                                "examen": {
+                                    "examen_id": 1,
+                                    "tipo": "VARK",
+                                    "nombre": "Test VARK",
+                                    "descripcion": "Estilos de aprendizaje VARK",
+                                },
+                                "usuario_id": 2,
+                                "grupo": "LICENCIATURA",
+                                "fecha_creacion": "2026-05-09T12:00:00Z",
+                                "estado": "FINALIZADO",
+                                "resultado_vark": {
+                                    "v": 4,
+                                    "a": 6,
+                                    "r": 2,
+                                    "k": 4,
+                                    "arquetipo": {
+                                        "arquetipo_id": 1,
+                                        "codigo": "A",
+                                        "nombre": "Aural / Auditivo",
+                                        "descripcion": "Aprende mejor escuchando...",
+                                    },
+                                },
+                                "resultado_jung": None,
+                            }
+                        ],
+                    )
+                ],
+            ),
+            401: OpenApiResponse(
+                response=ErrorDetalleSerializer,
+                examples=[
+                    OpenApiExample(
+                        "Sin credenciales",
+                        value={"detail": "Authentication credentials were not provided."},
+                    )
+                ],
+            ),
+            403: OpenApiResponse(
+                response=ErrorDetalleSerializer,
+                examples=[
+                    OpenApiExample(
+                        "Sin permisos",
+                        value={"detail": "You do not have permission to perform this action."},
+                    )
+                ],
+            ),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path=r"grupo/(?P<grupo>[^/]+)")
+    def por_grupo(self, request, grupo=None):
+        queryset = self.get_queryset().filter(grupo=grupo)
+        return Response(self.get_serializer(queryset, many=True).data)
 
     @extend_schema(
         description=(

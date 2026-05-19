@@ -210,6 +210,10 @@ class LogoutAPIView(APIView):
         }
     ),
     create=extend_schema(
+        description=(
+            "Registro publico. Si envias token con rol ADMIN, puedes crear usuarios con rol ADMIN. "
+            "Sin token, el rol ADMIN no es permitido."
+        ),
         request=UsuarioRegistroSerializer,
         responses={
             201: OpenApiResponse(
@@ -261,9 +265,20 @@ class LogoutAPIView(APIView):
                     "grupo": "LICENCIATURA",
                 },
                 request_only=True,
+            ),
+            OpenApiExample(
+                "Registro admin (requiere token ADMIN)",
+                value={
+                    "nombre": "Admin Uno",
+                    "email": "admin@correo.com",
+                    "contrasena": "miclave123",
+                    "grupo": "MAESTRIA",
+                    "rol": "ADMIN",
+                },
+                request_only=True,
             )
         ],
-        auth=[],
+        auth=[{"TokenAuth": []}, {}],
     ),
     update=extend_schema(
         request=UsuarioAdminSerializer,

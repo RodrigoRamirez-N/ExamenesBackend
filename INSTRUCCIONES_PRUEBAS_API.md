@@ -75,6 +75,7 @@
 
 ### POST /api/usuarios/
 **Token:** no (registro publico)
+- Si envias token ADMIN, puedes crear usuarios con rol ADMIN.
 
 **Request**
 ```json
@@ -83,6 +84,17 @@
   "email": "ana@correo.com",
   "contrasena": "miclave123",
   "grupo": "LICENCIATURA"
+}
+```
+
+**Request (crear admin con token ADMIN)**
+```json
+{
+  "nombre": "Admin Uno",
+  "email": "admin@correo.com",
+  "contrasena": "miclave123",
+  "grupo": "MAESTRIA",
+  "rol": "ADMIN"
 }
 ```
 
@@ -101,6 +113,13 @@
 ```json
 {
   "email": ["usuario con este email ya existe."]
+}
+```
+
+**400 Bad Request** (rol admin en registro publico)
+```json
+{
+  "rol": ["No es posible asignar rol ADMIN en registro publico"]
 }
 ```
 
@@ -321,9 +340,90 @@
 ## Endpoints de examenes presentados
 
 ### GET /api/examenes-presentados/
+**Token:** si (ADMIN)
+
+**200 OK**
+```json
+[
+  {
+    "examen_presentado_id": 10,
+    "examen": {
+      "examen_id": 1,
+      "tipo": "VARK",
+      "nombre": "Test VARK",
+      "descripcion": "Estilos de aprendizaje VARK"
+    },
+    "usuario_id": 2,
+    "grupo": "LICENCIATURA",
+    "fecha_creacion": "2026-05-09T12:00:00Z",
+    "estado": "FINALIZADO",
+    "resultado_vark": {
+      "v": 4,
+      "a": 6,
+      "r": 2,
+      "k": 4,
+      "arquetipo": {
+        "arquetipo_id": 1,
+        "codigo": "A",
+        "nombre": "Aural / Auditivo",
+        "descripcion": "Aprende mejor escuchando..."
+      }
+    },
+    "resultado_jung": null
+  }
+]
+```
+
+---
+
+### GET /api/examenes-presentados/usuario/{usuario_id}/
 **Token:** si
-- ADMIN: lista todos
-- USUARIO: lista propios
+- ADMIN: puede consultar cualquier usuario_id
+- USUARIO: solo su propio usuario_id
+
+**200 OK**
+```json
+[
+  {
+    "examen_presentado_id": 10,
+    "examen": {
+      "examen_id": 1,
+      "tipo": "VARK",
+      "nombre": "Test VARK",
+      "descripcion": "Estilos de aprendizaje VARK"
+    },
+    "usuario_id": 2,
+    "grupo": "LICENCIATURA",
+    "fecha_creacion": "2026-05-09T12:00:00Z",
+    "estado": "FINALIZADO",
+    "resultado_vark": {
+      "v": 4,
+      "a": 6,
+      "r": 2,
+      "k": 4,
+      "arquetipo": {
+        "arquetipo_id": 1,
+        "codigo": "A",
+        "nombre": "Aural / Auditivo",
+        "descripcion": "Aprende mejor escuchando..."
+      }
+    },
+    "resultado_jung": null
+  }
+]
+```
+
+**403 Forbidden**
+```json
+{
+  "detail": "No tienes permiso para realizar esta accion."
+}
+```
+
+---
+
+### GET /api/examenes-presentados/grupo/{grupo}/
+**Token:** si (ADMIN)
 
 **200 OK**
 ```json
