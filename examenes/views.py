@@ -317,12 +317,12 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         usuario = self.request.user
+        if self.action == "retrieve":
+            return queryset
         if usuario.is_authenticated and usuario.rol == RolUsuario.ADMIN:
             return queryset
         if usuario.is_authenticated:
             return queryset.filter(Q(usuario=usuario) | Q(usuario__isnull=True))
-        if self.action == "retrieve":
-            return queryset.filter(usuario__isnull=True)
         return queryset.none()
 
     @extend_schema(
