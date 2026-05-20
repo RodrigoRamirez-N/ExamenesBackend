@@ -130,3 +130,30 @@ class ExamenPresentadoDetalleSerializer(serializers.ModelSerializer):
             "resultado_jung",
         )
         read_only_fields = fields
+
+
+class VarkResultadoResumenSerializer(serializers.Serializer):
+    v = serializers.IntegerField()
+    a = serializers.IntegerField()
+    r = serializers.IntegerField()
+    k = serializers.IntegerField()
+    arquetipo = ArquetipoSerializer(allow_null=True)
+
+
+class JungResultadoResumenSerializer(serializers.Serializer):
+    i_count = serializers.IntegerField()
+    e_count = serializers.IntegerField()
+    n_count = serializers.IntegerField()
+    s_count = serializers.IntegerField()
+    t_count = serializers.IntegerField()
+    f_count = serializers.IntegerField()
+    j_count = serializers.IntegerField()
+    p_count = serializers.IntegerField()
+    tipo_personalidad = serializers.CharField(allow_null=True)
+    arquetipo = ArquetipoSerializer(allow_null=True)
+
+
+class ExamenPresentadoGrupoResumenSerializer(serializers.Serializer):
+    grupo = serializers.CharField()
+    resultado_vark = VarkResultadoResumenSerializer(allow_null=True)
+    resultado_jung = JungResultadoResumenSerializer(allow_null=True)

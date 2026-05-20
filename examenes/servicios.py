@@ -1,6 +1,15 @@
 from collections import Counter
 
-from examenes.models import Arquetipo, ExamenPresentado, ExamenPresentadoRespuesta, JungResultado, TipoExamen, VarkResultado
+from django.db.models import Count, Sum
+
+from examenes.models import (
+    Arquetipo,
+    ExamenPresentado,
+    ExamenPresentadoRespuesta,
+    JungResultado,
+    TipoExamen,
+    VarkResultado,
+)
 
 
 def _obtener_arquetipo(codigo: str | None) -> Arquetipo | None:
@@ -82,3 +91,84 @@ def calcular_resultado(examen_presentado: ExamenPresentado):
     if examen_presentado.examen.tipo == TipoExamen.VARK:
         return calcular_resultado_vark(examen_presentado)
     return calcular_resultado_jung(examen_presentado)
+
+
+def resumir_resultado_vark(examenes_presentados):
+    resumen = (
+        examenes_presentados.filter(
+            examen__tipo=TipoExamen.VARK,
+            resultado_vark__isnull=False,
+        )
+        .aggregate(
+            total=Count("examen_presentado_id"),
+            v=Sum("resultado_vark__v"),
+            a=Sum("resultado_vark__a"),
+            r=Sum("resultado_vark__r"),
+            k=Sum("resultado_vark__k"),
+        )
+    )
+    total = resumen.get("total") or 0
+    v = resumen.get("v") or 0
+    a = resumen.get("a") or 0
+    r = resumen.get("r") or 0
+    k = resumen.get("k") or 0
+    if total:
+        codigo_arquetipo = _codigo_vark({"V": v, "A": a, "R": r, "K": k})
+        arquetipo = _obtener_arquetipo(codigo_arquetipo)
+    else:
+        arquetipo = None
+    return {"v": v, "a": a, "r": r, "k": k, "arquetipo": arquetipo}
+
+
+def resumir_resultado_jung(examenes_presentados):
+    resumen = (
+        examenes_presentados.filter(
+            examen__tipo=TipoExamen.JUNG,
+            resultado_jung__isnull=False,
+        )
+        .aggregate(
+            total=Count("examen_presentado_id"),
+            i_count=Sum("resultado_jung__i_count"),
+            e_count=Sum("resultado_jung__e_count"),
+            n_count=Sum("resultado_jung__n_count"),
+            s_count=Sum("resultado_jung__s_count"),
+            t_count=Sum("resultado_jung__t_count"),
+            f_count=Sum("resultado_jung__f_count"),
+            j_count=Sum("resultado_jung__j_count"),
+            p_count=Sum("resultado_jung__p_count"),
+        )
+    )
+    total = resumen.get("total") or 0
+    i_count = resumen.get("i_count") or 0
+    e_count = resumen.get("e_count") or 0
+    n_count = resumen.get("n_count") or 0
+    s_count = resumen.get("s_count") or 0
+    t_count = resumen.get("t_count") or 0
+    f_count = resumen.get("f_count") or 0
+    j_count = resumen.get("j_count") or 0
+    p_count = resumen.get("p_count") or 0
+    if total:
+        tipo_personalidad = "".join(
+            [
+                "E" if e_count >= i_count else "I",
+                "S" if s_count >= n_count else "N",
+                "T" if t_count >= f_count else "F",
+                "J" if j_count >= p_count else "P",
+            ]
+        )
+        arquetipo = _obtener_arquetipo(tipo_personalidad)
+    else:
+        tipo_personalidad = None
+        arquetipo = None
+    return {
+        "i_count": i_count,
+        "e_count": e_count,
+        "n_count": n_count,
+        "s_count": s_count,
+        "t_count": t_count,
+        "f_count": f_count,
+        "j_count": j_count,
+        "p_count": p_count,
+        "tipo_personalidad": tipo_personalidad,
+        "arquetipo": arquetipo,
+    }

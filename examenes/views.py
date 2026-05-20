@@ -28,9 +28,15 @@ from examenes.serializers import (
     ExamenLecturaSerializer,
     ExamenPresentadoDetalleSerializer,
     ExamenPresentadoEnvioSerializer,
+    ExamenPresentadoGrupoResumenSerializer,
     ExamenPresentadoResumenSerializer,
 )
-from examenes.servicios import calcular_resultado_jung, calcular_resultado_vark
+from examenes.servicios import (
+    calcular_resultado_jung,
+    calcular_resultado_vark,
+    resumir_resultado_jung,
+    resumir_resultado_vark,
+)
 from usuarios.permissions import EsAdmin
 from usuarios.models import RolUsuario
 
@@ -395,41 +401,45 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(queryset, many=True).data)
 
     @extend_schema(
-        description="Requiere token con rol ADMIN. Devuelve examenes presentados del grupo.",
+        description="Requiere token con rol ADMIN. Devuelve resumen agregado del grupo.",
         responses={
             200: OpenApiResponse(
-                response=ExamenPresentadoDetalleSerializer(many=True),
+                response=ExamenPresentadoGrupoResumenSerializer,
                 examples=[
                     OpenApiExample(
-                        "Listado por grupo",
-                        value=[
-                            {
-                                "examen_presentado_id": 10,
-                                "examen": {
-                                    "examen_id": 1,
-                                    "tipo": "VARK",
-                                    "nombre": "Test VARK",
-                                    "descripcion": "Estilos de aprendizaje VARK",
+                        "Resumen por grupo",
+                        value={
+                            "grupo": "PRIMARIA",
+                            "resultado_vark": {
+                                "v": 0,
+                                "a": 0,
+                                "r": 0,
+                                "k": 16,
+                                "arquetipo": {
+                                    "arquetipo_id": 21,
+                                    "codigo": "K",
+                                    "nombre": "Kinestesico",
+                                    "descripcion": "Aprende mejor con practica, movimiento y experiencias reales.",
                                 },
-                                "usuario_id": 2,
-                                "grupo": "LICENCIATURA",
-                                "fecha_creacion": "2026-05-09T12:00:00Z",
-                                "estado": "FINALIZADO",
-                                "resultado_vark": {
-                                    "v": 4,
-                                    "a": 6,
-                                    "r": 2,
-                                    "k": 4,
-                                    "arquetipo": {
-                                        "arquetipo_id": 1,
-                                        "codigo": "A",
-                                        "nombre": "Aural / Auditivo",
-                                        "descripcion": "Aprende mejor escuchando...",
-                                    },
+                            },
+                            "resultado_jung": {
+                                "i_count": 8,
+                                "e_count": 0,
+                                "n_count": 8,
+                                "s_count": 0,
+                                "t_count": 0,
+                                "f_count": 8,
+                                "j_count": 0,
+                                "p_count": 8,
+                                "tipo_personalidad": "INFP",
+                                "arquetipo": {
+                                    "arquetipo_id": 7,
+                                    "codigo": "INFP",
+                                    "nombre": "El Sanador",
+                                    "descripcion": "Creativo, introspectivo y empatico.",
                                 },
-                                "resultado_jung": None,
-                            }
-                        ],
+                            },
+                        },
                     )
                 ],
             ),
@@ -456,7 +466,13 @@ class ExamenPresentadoViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["get"], url_path=r"grupo/(?P<grupo>[^/]+)")
     def por_grupo(self, request, grupo=None):
         queryset = self.get_queryset().filter(grupo=grupo)
-        return Response(self.get_serializer(queryset, many=True).data)
+        resumen = {
+            "grupo": grupo,
+            "resultado_vark": resumir_resultado_vark(queryset),
+            "resultado_jung": resumir_resultado_jung(queryset),
+        }
+        serializer = ExamenPresentadoGrupoResumenSerializer(instance=resumen)
+        return Response(serializer.data)
 
     @extend_schema(
         description=(
